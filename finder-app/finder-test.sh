@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tester script for assignment 1 and assignment 2
+# Tester script for assignment 1, assignment 2, and assignment 3
 # Author: Siddhant Jajoo
 
 set -e
@@ -29,13 +29,13 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
-# Clean previous build artifacts
-echo "Removing old writer binary and object files..."
-make clean
+# Removed the make steps for Assignment 3
+# Previous make clean and make steps are commented out
+# echo "Removing old writer binary and object files..."
+# make clean
 
-# Compile writer application using native compilation
-echo "Compiling writer application natively..."
-make
+# echo "Compiling writer application natively..."
+# make
 
 rm -rf "${WRITEDIR}"
 mkdir -p "$WRITEDIR"
@@ -57,9 +57,6 @@ then
 		exit 1
 	fi
 fi
-#echo "Removing the old writer utility and compiling as a native application"
-#make clean
-#make
 
 for i in $( seq 1 $NUMFILES)
 do
