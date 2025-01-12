@@ -17,18 +17,12 @@ void* threadfunc(void* thread_param)
 
     struct thread_data* thread_func_args = (struct thread_data*)thread_param;
 
-    // Sleep before obtaining the mutex
-    usleep(thread_func_args->wait_to_obtain_ms * 1000);
-
     // Lock the mutex
     if (pthread_mutex_lock(thread_func_args->mutex) != 0) {
         ERROR_LOG("Failed to lock mutex.");
         thread_func_args->thread_complete_success = false;
         return thread_func_args;
     }
-
-    // Sleep while holding the mutex
-    usleep(thread_func_args->wait_to_release_ms * 1000);
 
     // Unlock the mutex
     if (pthread_mutex_unlock(thread_func_args->mutex) != 0) {
@@ -74,6 +68,6 @@ bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex,int 
         return false;
     }
 
-    return false;
+    return true;
 }
 
