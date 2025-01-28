@@ -9,6 +9,8 @@
 #include <syslog.h>
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/time.h>
 
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 #define PORT 9000
@@ -58,9 +60,9 @@ void handle_signal(int signo) {
         }
 
         closelog();
-    } else if (signo == SIGUSR1) {
-        // SIGUSR1 triggers timestamp append
-        // append_timestamp();
+    } else if (signo == SIGALRM) {
+        // SIGALRM triggers timestamp append
+        append_timestamp();
     }
 }
 
@@ -110,15 +112,42 @@ void *connection_handler(void *client_socket) {
     return NULL;
 }
 
+// Setup a repeating timer to trigger SIGALRM every 10 seconds
+void setup_timer() {
+	struct itimerval timer;
+
+	timer.it_interval.tv_sec = 10;
+	timer.it_interval.tv_usec = 0;
+
+	timer.it_value.tv_sec = 10;
+	timer.it_value.tv_usec = 10;
+
+	setitimer(ITIMER_REAL, &timer, NULL);
+}
+
 int main(int argc, char *argv[]) {
     openlog("aesdsocket", LOG_PID | LOG_CONS, LOG_USER);
 
     struct sigaction new_action;
     memset(&new_action, 0, sizeof(new_action));
     new_action.sa_handler = handle_signal;
-    sigaction(SIGINT, &new_action, NULL);
-    sigaction(SIGTERM, &new_action, NULL);
-    sigaction(SIGUSR1, &new_action, NULL); // Register SIGUSR1 for timestamp appending
+
+    if (sigaction(SIGINT, &new_action, NULL) != 0) {
+        syslog(LOG_ERR, "SIGINT failed: %s", strerror(errno));
+        return -1;
+    }
+
+    if (sigaction(SIGTERM, &new_action, NULL) != 0) {
+        syslog(LOG_ERR, "SIGTERM failed: %s", strerror(errno));
+        return -1;
+    }
+
+    if (sigaction(SIGALRM, &new_action, NULL) != 0) {
+        syslog(LOG_ERR, "SIGALRM failed: %s", strerror(errno));
+        return -1;
+    }
+
+    setup_timer();
 
     if (argc == 2 && strcmp(argv[1], "-d") == 0) {
         if (daemon(0, 0) == -1) {
